@@ -1,0 +1,9 @@
+{:source-paths
+ ["src"]
+
+ :builds
+ {:game {:target :browser
+         :output-dir "out"
+         :modules {:main {:entries [main]}}}}
+
+ :build-options {:cache-level :all}}

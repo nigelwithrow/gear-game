@@ -1,0 +1,17 @@
+{
+  "name": "gear-game",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Nigel Withrow <nigelwithrow78@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build": "make build",
+    "watch": "make watch",
+    "clean": "make clean",
+    "make": "make"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "shadow-cljs": "^3.4.10"
+  }
+}
