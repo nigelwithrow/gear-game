@@ -6,4 +6,8 @@
          :output-dir "out"
          :modules {:main {:entries [main]}}}}
 
- :build-options {:cache-level :all}}
+ :build-options
+ {:cache-level :all}
+
+ :autoload
+ true}
