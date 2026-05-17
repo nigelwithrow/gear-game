@@ -7,6 +7,7 @@
         packages = with nixpkgs.legacyPackages.x86_64-linux; [
           # love
           clojure # for development - im still learning clojure after all
+          clojure-lsp
           jdk21_headless # requried by shadow-cljs
         ];
         shellHook = ''
