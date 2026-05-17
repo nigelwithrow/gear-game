@@ -1,9 +1,24 @@
 (ns main)
 
+;;
+;; constants
+;;
+
+; width / height
+(def RATIO 1.78)
+
+(def FPS 60)
+(def FRAME-DURATION (/ 1000 FPS))
+
+(def INIT-STATE
+  {:pressed nil})
+
+;;
+;; canvas, ctx & helpers
+;;
+
 (def canvas (atom nil))
 (def ctx (atom nil))
-
-;; canvas & ctx helpers
 
 ; normalize coordinates with current canvas-size and offset from viewport
 (defn normalize [cnv x y]
@@ -17,18 +32,11 @@
         yy (.-height canvas)]
     [(* x xx) (* y yy)]))
 
-; width / height
-(def RATIO 1.78)
-
-(def FPS 60)
-(def FRAME-DURATION (/ 1000 FPS))
-
-(def INIT-STATE
-  {:pressed nil})
-
-(def pressed-keys (atom #{}))
-(def clicked-mouse (atom nil))
-
+; calculate the maximum canvas-size in order to contain the entire canvas in the provided window
+; dimensions while preserving the canvas ratio
+; also returns the left and top offsets to center the resulting canvas in the window
+;
+; returns [canvas-width canvas-height offset-left offset-top]
 (defn calc-size [ww wh]
   (let [est-width (* RATIO wh)
 
@@ -53,12 +61,25 @@
     (set! (.-left canvas) gx)
     (set! (.-top canvas) gy)))
 
+(defn attach-canvas []
+  (reset! canvas (.getElementById js/document "canvas"))
+  (reset! ctx (.getContext @canvas "2d")))
+
+;;
+;; state and stateful values
+;;
+
 ; persists across hot-reloads
 (defonce state (atom INIT-STATE))
 
-(def lag (atom 0))
-(def start- (atom (js/Date.now)))
+(def pressed-keys (atom #{}))
+(def clicked-mouse (atom nil))
 
+;;
+;; game loop
+;;
+
+; main draw/render function
 (defn game-render [_lag-offset]
   (when-let [cnv @canvas]
     (set! (.-fillStyle @ctx) "white")
@@ -70,12 +91,16 @@
             [x y] (ezileamron cnv x y)]
         (.fillRect @ctx (- x 5) (- y 5) 10 10)))))
 
+; main tick/update function
 (defn game-update []
   (when-let [cm @clicked-mouse]
     (swap! state #(assoc % :pressed (:start cm))))
   (when-not @clicked-mouse
     (when (:pressed @state)
       (swap! state #(assoc % :pressed nil)))))
+
+(def lag (atom 0))
+(def start- (atom (js/Date.now)))
 
 (defn game-loop [_dt]
   (when-let [cnv @canvas]
@@ -91,10 +116,12 @@
       (let [lag-offset (/ @lag FRAME-DURATION)]
         (game-render lag-offset)))))
 
-(defn attach-canvas []
-  (reset! canvas (.getElementById js/document "canvas"))
-  (reset! ctx (.getContext @canvas "2d")))
+;;
+;; game entrypoint
+;;
 
+; initial/main function
+; called once on page load/refresh, not called again on hot-reloads
 (defn init []
   (attach-canvas)
 
@@ -146,17 +173,15 @@
 
 (set! (.-onload js/window) init)
 
+;;
+;; debug utilities
+;;
+
+; register hook to call before hot-reload happens
 (defn ^:dev/before-load stop []
   (reset! canvas nil)
   (reset! ctx nil))
 
+; register hook to call after hot-reload happens
 (defn ^:dev/after-load start []
   (attach-canvas))
-
-; (defn foo []
-;   (js/alert "foo"))
-; (println "Hello world!")
-
-;; ADDED
-; (defn average [a b]
-;   (/ (+ a b) 2.0))
