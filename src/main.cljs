@@ -1,4 +1,4 @@
-(ns main)
+(ns main (:require [paths] [lib]))
 
 ;;
 ;; constants
@@ -14,23 +14,17 @@
   {:pressed nil})
 
 ;;
-;; canvas, ctx & helpers
+;; state and stateful values
 ;;
+
+; persists across hot-reloads
+(defonce state (atom INIT-STATE))
 
 (def canvas (atom nil))
 (def ctx (atom nil))
 
-; normalize coordinates with current canvas-size and offset from viewport
-(defn normalize [cnv x y]
-  (let [xx (.-width cnv)
-        yy (.-height cnv)]
-    [(/ (- x (.-left cnv)) xx) (/ (- y (.-top cnv)) yy)]))
-
-; reverse normalize coordinates by multiplying with current canvas-size
-(defn ezileamron [canvas x y]
-  (let [xx (.-width canvas)
-        yy (.-height canvas)]
-    [(* x xx) (* y yy)]))
+(def pressed-keys (atom #{}))
+(def clicked-mouse (atom nil))
 
 ; calculate the maximum canvas-size in order to contain the entire canvas in the provided window
 ; dimensions while preserving the canvas ratio
@@ -52,7 +46,7 @@
   (let [wh js/window.innerHeight
         ww js/window.innerWidth
         [gw gh gx gy] (calc-size ww wh)]
-    (js/console.log "Canvas size updated:" (str gx ", " gy))
+    (js/console.log "CNV SIZE UPDATE " (str "(" gx ", " gy ")"))
     (set! (.-width canvas) gw)
     (set! (.-height canvas) gh)
     (set! (.-left (.-style canvas)) (str gx "px"))
@@ -62,46 +56,70 @@
     (set! (.-top canvas) gy)))
 
 (defn attach-canvas []
-  (reset! canvas (.getElementById js/document "canvas"))
-  (reset! ctx (.getContext @canvas "2d")))
-
-;;
-;; state and stateful values
-;;
-
-; persists across hot-reloads
-(defonce state (atom INIT-STATE))
-
-(def pressed-keys (atom #{}))
-(def clicked-mouse (atom nil))
+  (let [cnv (.getElementById js/document "canvas")
+        context (.getContext cnv "2d")]
+    (reset! canvas cnv)
+    (reset! ctx context)))
 
 ;;
 ;; game loop
 ;;
 
+(defn draw-gear [cnv ctx cm?]
+  (lib/with-gear-transform
+    ctx
+    cnv
+    (fn [ctx]
+      (let [path (new js/Path2D paths/gear-socket)]
+        (when-let [cm cm?]
+          (let [[x y] (:start cm)
+                [x y] (lib/ezileamron cnv x y)]
+            (if (.isPointInPath ctx path x y)
+              (set! (.-fillStyle ctx) "red")
+              ())))
+        (.fill ctx path)
+
+        ; (set! (.-fillStyle ctx) "green")
+        ; (doseq [s (vals paths/GEAR_AREAS)]
+        ;   (.fill ctx (new js/Path2D s)))
+        ))))
+
 ; main draw/render function
-(defn game-render [_lag-offset]
-  (when-let [cnv @canvas]
-    (set! (.-fillStyle @ctx) "white")
-    (.fillRect @ctx 0 0 (.-width cnv) (.-height cnv))
-    (set! (.-fillStyle @ctx) "black")
-    ; (set! (.-lineWidth @ctx) 1)
-    (when-let [cm @clicked-mouse]
-      (let [[x y] (:start cm)
-            [x y] (ezileamron cnv x y)]
-        (.fillRect @ctx (- x 5) (- y 5) 10 10)))))
+(defn game-render [cnv ctx _lag-offset]
+  ; (set! (.-fillStyle ctx) "rgba(0, 0, 0, 0.1)")
+  (set! (.-fillStyle ctx) "grey")
+  (.fillRect ctx 0 0 (.-width cnv) (.-height cnv))
+
+  (set! (.-fillStyle ctx) "black")
+  (when-let [cm @clicked-mouse]
+    (let [[x y] (:start cm)
+          [x y] (lib/ezileamron cnv x y)]
+      (.fillRect ctx (- x 5) (- y 5) 10 10)))
+
+  ; check if mouse is on gear
+  (when-some [cm @clicked-mouse]
+    (when-some [[x y] (:now cm)]
+      (let [[x y] (lib/ezileamron cnv x y)]
+        (when-some [gear (paths/get-gear ctx cnv x y)]
+          (set! (.-font ctx) "bold 48px serif")
+          (.fillText ctx (name gear) 100 200)))))
+
+  (.save ctx)
+  (draw-gear cnv ctx @clicked-mouse)
+  (.restore ctx))
 
 ; main tick/update function
-(defn game-update []
-  (when-let [cm @clicked-mouse]
-    (swap! state #(assoc % :pressed (:start cm))))
-  (when-not @clicked-mouse
+(defn game-update [cnv ctx]
+  (if-some [cm @clicked-mouse]
+    (swap! state #(assoc % :pressed (:start cm)))
+
     (when (:pressed @state)
       (swap! state #(assoc % :pressed nil)))))
 
 (def lag (atom 0))
 (def start- (atom (js/Date.now)))
 
+; thank you https://stackoverflow.com/a/25627639
 (defn game-loop [_dt]
   (when-let [cnv @canvas]
     (js/requestAnimationFrame game-loop cnv)
@@ -111,10 +129,10 @@
       (reset! lag elapsed)
 
       (while (>= @lag FRAME-DURATION)
-        (game-update)
+        (game-update cnv @ctx)
         (swap! lag - FRAME-DURATION))
       (let [lag-offset (/ @lag FRAME-DURATION)]
-        (game-render lag-offset)))))
+        (game-render cnv @ctx lag-offset)))))
 
 ;;
 ;; game entrypoint
@@ -151,7 +169,7 @@
    "pointerdown"
    #(when-let [cnv @canvas]
       (reset! clicked-mouse
-              {:start (normalize cnv (.-clientX %) (.-clientY %))})))
+              {:start (lib/normalize cnv (.-clientX %) (.-clientY %))})))
   (js/addEventListener
    "pointerup"
    #(if-not (nil? @canvas)
@@ -166,8 +184,8 @@
         (reset!
          clicked-mouse
          (assoc cm
-                :move (normalize cnv (.-movementX %) (.-movementY %))
-                :now (normalize cnv (.-clientX %) (.-clientY %)))))))
+                :move (lib/normalize cnv (.-movementX %) (.-movementY %))
+                :now (lib/normalize cnv (.-clientX %) (.-clientY %)))))))
 
   (game-loop nil))
 
