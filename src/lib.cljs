@@ -23,17 +23,16 @@
           _ (.restore ctx)]
       ret)))
 
-(defn with-scale [f x y]
-  (fn [ctx]
-    (.save ctx)
-    (.scale ctx x y)
-    (f ctx)
-    (.restore ctx)))
-
 (defn with-gear-transform [ctx cnv f]
-  (let [x (/ (.-height cnv) 1000) y (/ (.-height cnv) 1000)]
+  (let
+   [scale (/ (.-height cnv) 750)
+    real-x (* scale 190)
+    real-y (* scale 120)
+    offset-x (/ (- (.-width cnv) real-x) 2)
+    offset-y (- (.-height cnv) (* 1.5 real-y))]
+
     ((lib/with-ctx (fn [ctx]
-                     (.scale ctx x y)
-                     ; (.translate ctx 100 100)
-                     (f ctx))) ctx)))
+                     (.translate ctx offset-x offset-y)
+                     (.scale ctx scale scale)
+                     (f ctx scale))) ctx)))
 

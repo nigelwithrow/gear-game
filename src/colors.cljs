@@ -1,0 +1,5 @@
+(ns colors)
+
+(def REDBROWN 0x511703)
+(def CREAMLEATHER 0x88795c)
+(def BRIGHTSTEEL 0xc1c8d2)

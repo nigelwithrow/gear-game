@@ -11,7 +11,11 @@ out/index.html: index.html
 	mkdir -p out
 	cp index.html out/index.html
 
-out: out/main.js out/index.html
+out/bg.png: assets/bg.png
+	mkdir -p out
+	cp assets/bg.png out/bg.png
+
+out: out/main.js out/index.html out/bg.png
 
 build: out
 	

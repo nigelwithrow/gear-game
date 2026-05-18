@@ -1,17 +1,24 @@
-(ns main (:require [paths] [lib]))
+(ns main (:require
+          [assets]
+          [lib]
+          [paths]))
 
 ;;
 ;; constants
 ;;
 
 ; width / height
-(def RATIO 1.78)
+(def RATIO 1.5)
 
 (def FPS 60)
 (def FRAME-DURATION (/ 1000 FPS))
 
+(def GEAR-STICK-RADIUS 13)
+
 (def INIT-STATE
-  {:pressed nil})
+  {:level nil
+   :gear-location [95, 60] ; relative to gear render location in gear-path scale
+   :pressed nil})
 
 ;;
 ;; state and stateful values
@@ -46,7 +53,7 @@
   (let [wh js/window.innerHeight
         ww js/window.innerWidth
         [gw gh gx gy] (calc-size ww wh)]
-    (js/console.log "CNV SIZE UPDATE " (str "(" gx ", " gy ")"))
+    ; (js/console.log "CNV SIZE UPDATE " (str "(" gx ", " gy ") (" gw ", " gh ")"))
     (set! (.-width canvas) gw)
     (set! (.-height canvas) gh)
     (set! (.-left (.-style canvas)) (str gx "px"))
@@ -71,12 +78,12 @@
     cnv
     (fn [ctx]
       (let [path (new js/Path2D paths/gear-socket)]
+        (set! (.-fillStyle ctx) "black")
         (when-let [cm cm?]
           (let [[x y] (:start cm)
                 [x y] (lib/ezileamron cnv x y)]
-            (if (.isPointInPath ctx path x y)
-              (set! (.-fillStyle ctx) "red")
-              ())))
+            (when (.isPointInPath ctx path x y)
+              (set! (.-fillStyle ctx) "red"))))
         (.fill ctx path)
 
         ; (set! (.-fillStyle ctx) "green")
@@ -85,16 +92,23 @@
         ))))
 
 ; main draw/render function
-(defn game-render [cnv ctx _lag-offset]
+(defn draw [cnv ctx _lag-offset]
   ; (set! (.-fillStyle ctx) "rgba(0, 0, 0, 0.1)")
   (set! (.-fillStyle ctx) "grey")
-  (.fillRect ctx 0 0 (.-width cnv) (.-height cnv))
+  ; (.fillRect ctx 0 0 (.-width cnv) (.-height cnv))
+  (.drawImage ctx assets/BG 0 0 (.-width cnv) (.-height cnv))
 
-  (set! (.-fillStyle ctx) "black")
   (when-let [cm @clicked-mouse]
     (let [[x y] (:start cm)
           [x y] (lib/ezileamron cnv x y)]
-      (.fillRect ctx (- x 5) (- y 5) 10 10)))
+      (.beginPath ctx)
+      (set! (.-strokeStyle ctx) "rgba(100%, 100%, 100%, 50%)")
+      (.arc ctx
+            x y
+            10
+            0 (* 2 js/Math.PI))
+      (.closePath ctx)
+      (.stroke ctx)))
 
   ; check if mouse is on gear
   (when-some [cm @clicked-mouse]
@@ -104,9 +118,31 @@
           (set! (.-font ctx) "bold 48px serif")
           (.fillText ctx (name gear) 100 200)))))
 
-  (.save ctx)
   (draw-gear cnv ctx @clicked-mouse)
-  (.restore ctx))
+
+  ; draw gear stick
+  (when-some [[x y] (:gear-location @state)]
+    (lib/with-gear-transform ctx cnv
+      (fn [ctx scale]
+        ; rod
+        (set! (.-fillStyle ctx) "red")
+        (.beginPath ctx)
+        (.arc ctx
+              x y
+              GEAR-STICK-RADIUS
+              0 (* 2 js/Math.PI))
+        (.closePath ctx)
+        (.fill ctx)
+
+        ; bulb
+        (.beginPath ctx)
+        (set! (.-fillStyle ctx) "red")
+        (.arc ctx
+              x (- y 240)
+              (* 4 GEAR-STICK-RADIUS)
+              0 (* 2 js/Math.PI))
+        (.closePath ctx)
+        (.fill ctx)))))
 
 ; main tick/update function
 (defn game-update [cnv ctx]
@@ -132,7 +168,7 @@
         (game-update cnv @ctx)
         (swap! lag - FRAME-DURATION))
       (let [lag-offset (/ @lag FRAME-DURATION)]
-        (game-render cnv @ctx lag-offset)))))
+        (draw cnv @ctx lag-offset)))))
 
 ;;
 ;; game entrypoint
@@ -189,7 +225,7 @@
 
   (game-loop nil))
 
-(set! (.-onload js/window) init)
+(set! (.-onload js/window) (assets/once-all-loaded init))
 
 ;;
 ;; debug utilities
