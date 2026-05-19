@@ -78,7 +78,7 @@
 
 (defn get-gear [ctx cnv x y]
   (lib/with-gear-transform ctx cnv
-    (fn [ctx]
+    (fn [ctx _]
       (reduce-kv
        (fn [acc k path]
            ; (set! (.-fillStyle ctx) "blue")

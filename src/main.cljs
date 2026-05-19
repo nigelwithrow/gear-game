@@ -1,38 +1,17 @@
 (ns main (:require
           [assets]
+          [game]
           [lib]
-          [paths]))
-
-;;
-;; constants
-;;
-
-; width / height
-(def RATIO 1.5)
-
-(def FPS 60)
-(def FRAME-DURATION (/ 1000 FPS))
-
-(def GEAR-STICK-RADIUS 13)
-
-(def INIT-STATE
-  {:level nil
-   :gear-location [95, 60] ; relative to gear render location in gear-path scale
-   :pressed nil})
-
-;;
-;; state and stateful values
-;;
+          [paths]
+          [state :refer [FRAME-DURATION
+                         RATIO
+                         canvas
+                         clicked-mouse
+                         ctx
+                         pressed-keys
+                         state]]))
 
 ; persists across hot-reloads
-(defonce state (atom INIT-STATE))
-
-(def canvas (atom nil))
-(def ctx (atom nil))
-
-(def pressed-keys (atom #{}))
-(def clicked-mouse (atom nil))
-
 ; calculate the maximum canvas-size in order to contain the entire canvas in the provided window
 ; dimensions while preserving the canvas ratio
 ; also returns the left and top offsets to center the resulting canvas in the window
@@ -72,25 +51,6 @@
 ;; game loop
 ;;
 
-(defn draw-gear [cnv ctx cm?]
-  (lib/with-gear-transform
-    ctx
-    cnv
-    (fn [ctx]
-      (let [path (new js/Path2D paths/gear-socket)]
-        (set! (.-fillStyle ctx) "black")
-        (when-let [cm cm?]
-          (let [[x y] (:start cm)
-                [x y] (lib/ezileamron cnv x y)]
-            (when (.isPointInPath ctx path x y)
-              (set! (.-fillStyle ctx) "red"))))
-        (.fill ctx path)
-
-        ; (set! (.-fillStyle ctx) "green")
-        ; (doseq [s (vals paths/GEAR_AREAS)]
-        ;   (.fill ctx (new js/Path2D s)))
-        ))))
-
 ; main draw/render function
 (defn draw [cnv ctx _lag-offset]
   ; (set! (.-fillStyle ctx) "rgba(0, 0, 0, 0.1)")
@@ -98,59 +58,41 @@
   ; (.fillRect ctx 0 0 (.-width cnv) (.-height cnv))
   (.drawImage ctx assets/BG 0 0 (.-width cnv) (.-height cnv))
 
+  ; draw game
+  (if-some [game (:game @state)]
+    (game/draw game cnv ctx)
+    ())
+
+  ; mouse-click animation
   (when-let [cm @clicked-mouse]
     (let [[x y] (:start cm)
           [x y] (lib/ezileamron cnv x y)]
       (.beginPath ctx)
-      (set! (.-strokeStyle ctx) "rgba(100%, 100%, 100%, 50%)")
+      (set! (.-strokeStyle ctx) "rgba(100%, 100%, 100%, 90%)")
       (.arc ctx
             x y
             10
             0 (* 2 js/Math.PI))
       (.closePath ctx)
-      (.stroke ctx)))
-
-  ; check if mouse is on gear
-  (when-some [cm @clicked-mouse]
-    (when-some [[x y] (:now cm)]
-      (let [[x y] (lib/ezileamron cnv x y)]
-        (when-some [gear (paths/get-gear ctx cnv x y)]
-          (set! (.-font ctx) "bold 48px serif")
-          (.fillText ctx (name gear) 100 200)))))
-
-  (draw-gear cnv ctx @clicked-mouse)
-
-  ; draw gear stick
-  (when-some [[x y] (:gear-location @state)]
-    (lib/with-gear-transform ctx cnv
-      (fn [ctx scale]
-        ; rod
-        (set! (.-fillStyle ctx) "red")
-        (.beginPath ctx)
-        (.arc ctx
-              x y
-              GEAR-STICK-RADIUS
-              0 (* 2 js/Math.PI))
-        (.closePath ctx)
-        (.fill ctx)
-
-        ; bulb
-        (.beginPath ctx)
-        (set! (.-fillStyle ctx) "red")
-        (.arc ctx
-              x (- y 240)
-              (* 4 GEAR-STICK-RADIUS)
-              0 (* 2 js/Math.PI))
-        (.closePath ctx)
-        (.fill ctx)))))
+      (.stroke ctx))))
 
 ; main tick/update function
 (defn game-update [cnv ctx]
+  ; update mouse press
   (if-some [cm @clicked-mouse]
     (swap! state #(assoc % :pressed (:start cm)))
 
     (when (:pressed @state)
-      (swap! state #(assoc % :pressed nil)))))
+      (swap! state #(assoc % :pressed nil))))
+
+  (if-some [game (:game @state)]
+    ; game
+    (game/update_ game cnv ctx)
+
+    ; main menu
+    (if (:credits @state)
+      ()
+      ())))
 
 (def lag (atom 0))
 (def start- (atom (js/Date.now)))

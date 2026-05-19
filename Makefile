@@ -15,7 +15,15 @@ out/bg.png: assets/bg.png
 	mkdir -p out
 	cp assets/bg.png out/bg.png
 
-out: out/main.js out/index.html out/bg.png
+out/bulb.png: assets/bulb.png
+	mkdir -p out
+	cp assets/bulb.png out/bulb.png
+
+out/rod.png: assets/rod.png
+	mkdir -p out
+	cp assets/rod.png out/rod.png
+
+out: out/main.js out/index.html out/bg.png out/bulb.png out/rod.png
 
 build: out
 	

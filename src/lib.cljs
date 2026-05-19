@@ -25,11 +25,11 @@
 
 (defn with-gear-transform [ctx cnv f]
   (let
-   [scale (/ (.-height cnv) 750)
-    real-x (* scale 190)
+   [scale (/ (.-height cnv) 600)
+    ; real-x (* scale 190)
     real-y (* scale 120)
-    offset-x (/ (- (.-width cnv) real-x) 2)
-    offset-y (- (.-height cnv) (* 1.5 real-y))]
+    offset-x (* (/ 27.5 40) (.-width cnv))
+    offset-y (- (.-height cnv) (* 2.1 real-y))]
 
     ((lib/with-ctx (fn [ctx]
                      (.translate ctx offset-x offset-y)
