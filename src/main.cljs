@@ -68,7 +68,8 @@
     (let [[x y] (:start cm)
           [x y] (lib/ezileamron cnv x y)]
       (.beginPath ctx)
-      (set! (.-strokeStyle ctx) "rgba(100%, 100%, 100%, 90%)")
+      (set! (.-lineWidth ctx) 1.8)
+      (set! (.-strokeStyle ctx) "rgba(100%, 100%, 100%, 70%)")
       (.arc ctx
             x y
             10
