@@ -18,7 +18,7 @@
 
 (def INIT-STATE
   {; game state
-   :game INIT-GAME ; type is game/INIT-GAME
+   :game INIT-GAME ; shape is INIT-GAME
    :pressed nil
 
    ; show credits screen
@@ -28,11 +28,17 @@
 ;; state and stateful values
 ;;
 
+;; shape is INIT-STATE
 (defonce state (atom INIT-STATE))
 
 (def canvas (atom nil))
 (def ctx (atom nil))
 
 (def pressed-keys (atom #{}))
+
+;; shape: nil|{
+;;   :start [float float]
+;;   :move [float float]
+;;   :now [float float]}
 (def clicked-mouse (atom nil))
 

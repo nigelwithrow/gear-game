@@ -70,6 +70,7 @@
       (.beginPath ctx)
       (set! (.-lineWidth ctx) 1.8)
       (set! (.-strokeStyle ctx) "rgba(100%, 100%, 100%, 70%)")
+      ; TODO HERE ^ will this affect future strokes?
       (.arc ctx
             x y
             10
