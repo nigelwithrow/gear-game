@@ -23,13 +23,18 @@
           _ (.restore ctx)]
       ret)))
 
+(defn calc-scale [cnv] (/ (.-height cnv) 600))
+
+(defn calc-transform
+  ([cnv] (calc-transform cnv (calc-scale cnv)))
+  ([cnv scale]
+   (let [real-y (* scale 120)]
+     [(* (/ 27.5 40) (.-width cnv)), (- (.-height cnv) (* 2.1 real-y))])))
+
 (defn with-gear-transform [ctx cnv f]
   (let
-   [scale (/ (.-height cnv) 600)
-    ; real-x (* scale 190)
-    real-y (* scale 120)
-    offset-x (* (/ 27.5 40) (.-width cnv))
-    offset-y (- (.-height cnv) (* 2.1 real-y))]
+   [scale (calc-scale cnv)
+    [offset-x offset-y] (calc-transform cnv scale)]
 
     ((lib/with-ctx (fn [ctx]
                      (.translate ctx offset-x offset-y)

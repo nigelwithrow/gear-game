@@ -74,6 +74,9 @@
    "a 15 15, 0, 0, 1 15 -15"
    "z"))
 
+(defonce GEAR-SOCKET-PATH
+  (new js/Path2D gear-socket))
+
 ; returns { :1 Path2D :2 Path2D :3 Path2D :4 Path2D :5 Path2D :r Path2D }
 
 (defn get-gear [ctx cnv x y]

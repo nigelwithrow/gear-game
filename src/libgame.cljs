@@ -72,3 +72,28 @@
       ()
 
       ())))
+
+; returns new string or position it went wrong
+; `s` is assumed to be valid
+(defn is-valid [s c']
+  (let [stack #js []
+
+        s-valid?
+        (reduce (fn [acc c]
+                  (or acc
+                      (case c
+                        (\( \[ \{)
+                        (do (.push stack c) nil)
+
+                        (\) \] \})
+                        (let [last (.-1 stack)] ;; TODO HERE does this work?
+                          (cond
+                            (undefined? last) false
+                            (and (= last \() (= c \))) true
+                            (and (= last \[) (= c \])) true
+                            (and (= last \{) (= c \})) true
+                            :else false)))))
+                nil
+                nil
+                s)]
+    (and s-valid? true)))

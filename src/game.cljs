@@ -15,7 +15,7 @@
 (defn draw-gear [cnv ctx cm?]
   (lib/with-gear-transform ctx cnv
     (fn [ctx _]
-      (let [path (new js/Path2D paths/gear-socket)]
+      (let [path paths/GEAR-SOCKET-PATH]
         ; (set! (.-fillStyle ctx) "black")
         (set! (.-fillStyle ctx) "rgba(0%, 0%, 0%, 40%)")
         (when-let [cm cm?]
@@ -39,7 +39,7 @@
           (set! (.-font ctx) "bold 48px serif")
           (.fillText ctx (name gear) 100 200)))))
 
-; draw gear stick
+  ; draw gear stick
   (when-some [[x y] (:gear-location (:game @state))]
     (lib/with-gear-transform ctx cnv
       (fn [ctx scale]
@@ -104,5 +104,31 @@
   (draw-gear cnv ctx @clicked-mouse))
 
 (defn update_ [g cnv ctx]
-; TODO HERE:
-  ())
+
+  (when-some [cm @clicked-mouse]
+    (when-some [[x y] (:move cm)]
+      (swap! clicked-mouse assoc :move nil)
+
+      (let [;[x y] (map #(* % 3.3) [x y])
+            [x y] (lib/ezileamron cnv x y)
+            scale (lib/calc-scale cnv)
+            x' (/ x scale)
+            y' (/ y scale)
+            [old-draw-x  old-draw-y] (:gear-location g)
+            new-x (+ old-draw-x x')
+            new-y (+ old-draw-y y')
+            inside-path (lib/with-gear-transform ctx cnv
+                          (fn [ctx _scale]
+                            (let [[x y] (map #(* % scale) [new-x new-y])
+                                  [trans-x trans-y] (lib/calc-transform cnv scale)
+                                  [x y] [(+ x trans-x) (+ y trans-y)]]
+
+                              (.isPointInPath ctx paths/GEAR-SOCKET-PATH x y))))]
+
+        (when inside-path
+          (let [new-game
+                  ; (update g :gear-location (fn [[x y]] [(+ x x') (+ y y')]))
+                (assoc g :gear-location [new-x new-y])
+                  ;
+                ]
+            (swap! state assoc :game new-game)))))))

@@ -15,11 +15,10 @@
     (set! (.-src img) "rod.png")
     img))
 
-(defn once-all-loaded [f]
+(defonce promise-all-loaded
   (let [promises
         (map
          (fn [img] (new js/Promise #(.addEventListener img "load" %)))
-         [BG BULB ROD])
+         [BG BULB ROD])]
 
-        promise (js/Promise.all promises)]
-    (.then promise f)))
+    (js/Promise.all promises)))

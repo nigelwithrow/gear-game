@@ -43,6 +43,7 @@
 
 (defn attach-canvas []
   (let [cnv (.getElementById js/document "canvas")
+        _ (js/console.log cnv)
         context (.getContext cnv "2d")]
     (reset! canvas cnv)
     (reset! ctx context)))
@@ -80,7 +81,7 @@
 
 ; main tick/update function
 (defn game-update [cnv ctx]
-  ; update mouse press
+  ; update mouse press (used for mouse-click anim)
   (if-some [cm @clicked-mouse]
     (swap! state #(assoc % :pressed (:start cm)))
 
@@ -159,17 +160,30 @@
   ; listen to pointermove event to maintain the mouse position & movement delta while it is clicked
   (js/addEventListener
    "pointermove"
-   #(when-let [cm @clicked-mouse]
+   #(when @clicked-mouse
       (let [cnv @canvas] ; safe because `cm`
-        (reset!
-         clicked-mouse
-         (assoc cm
-                :move (lib/normalize cnv (.-movementX %) (.-movementY %))
-                :now (lib/normalize cnv (.-clientX %) (.-clientY %)))))))
+        (swap! clicked-mouse
+               (fn [cm]
+                 (let [[now-x now-y] (lib/normalize cnv (.-clientX %) (.-clientY %))]
+                   (assoc cm
+                          :now [now-x now-y]
+                          :move (let [[dx dy] (if-some [[prev-x prev-y] (:now cm)]
+                                                [(- now-x prev-x) (- now-y prev-y)]
+                                                (let [[start-x start-y] (:start cm)]
+                                                  [(- now-x start-x) (- now-y start-y)]))
+                                      [x y] (or (:move cm) [0 0])] [(+ x dx) (+ y dy)]))))))))
 
   (game-loop nil))
 
-(set! (.-onload js/window) (assets/once-all-loaded init))
+(defonce promise-window-loaded
+  (new js/Promise
+       #(if (= js/document.readyState "complete")
+          (%)
+          (.addEventListener js/window "load" % #js {:once true}))))
+
+(.then
+ (js/Promise.all [promise-window-loaded assets/promise-all-loaded])
+ init)
 
 ;;
 ;; debug utilities
