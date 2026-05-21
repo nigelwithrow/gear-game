@@ -23,7 +23,19 @@ out/rod.png: assets/rod.png
 	mkdir -p out
 	cp assets/rod.png out/rod.png
 
-out: out/main.js out/index.html out/bg.png out/bulb.png out/rod.png
+out/menu.png: assets/menu.png
+	mkdir -p out
+	cp assets/menu.png out/menu.png
+
+out/how-to-play.png: assets/how-to-play.png
+	mkdir -p out
+	cp assets/how-to-play.png out/how-to-play.png
+
+out/meme.png: assets/meme.png
+	mkdir -p out
+	cp assets/meme.png out/meme.png
+
+out: out/main.js out/index.html out/bg.png out/bulb.png out/rod.png out/menu.png out/how-to-play.png out/meme.png
 
 build: out
 	

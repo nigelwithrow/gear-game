@@ -79,15 +79,28 @@
 
 ; returns { :1 Path2D :2 Path2D :3 Path2D :4 Path2D :5 Path2D :r Path2D }
 
-(defn get-gear [ctx cnv x y]
-  (lib/with-gear-transform ctx cnv
-    (fn [ctx _]
-      (reduce-kv
-       (fn [acc k path]
+(defn get-gear [ctx x y]
+  (reduce-kv
+   (fn [acc k path]
            ; (set! (.-fillStyle ctx) "blue")
            ; (.fill ctx path)
-         (if acc
-           acc
-           (if (.isPointInPath ctx path x y) k nil)))
-       nil
-       GEAR_PATHS))))
+     (if acc
+       acc
+       (if (.isPointInPath ctx path x y) k nil)))
+   nil
+   GEAR_PATHS))
+
+(defn rect-path [ctx x y w h]
+  (.beginPath ctx)
+  (.rect ctx x y w h)
+  (.closePath ctx)
+  (set! (.-fillStyle ctx) "yellow")
+  (.fill ctx))
+
+(def GEAR-STICK-RADIUS 13)
+
+(defonce INSCRIBED-OCTAGON
+  (map
+   #(vec [(* GEAR-STICK-RADIUS (js/Math.cos (/ (* % js/Math.PI) 4)))
+          (* GEAR-STICK-RADIUS (js/Math.sin (/ (* % js/Math.PI) 4)))])
+   [0 1 2 3 4 5 6 7]))

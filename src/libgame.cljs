@@ -65,35 +65,43 @@
                  :else (str (gen-expr (+ x y (dec z)))))
                b)))))
 
-(defn new-game [reverse difficulty]
-  (let [s (gen-expr difficulty)]
-    (if (not reverse)
+; returns validity-array
+; "([]{)}" -> validity-array: 000011
+(defn expr-validity [s]
+  (let [stack
+        #js []
 
-      ()
+        [validity]
+        (reduce
+         (fn [[arr bad] c]
 
-      ())))
+           (if bad
+             [(conj arr 1) true]
+             (if-some [validity
+                       (case c
+                         (\( \[ \{)
+                         (do
+                           (.push stack c)
+                           0)
 
-; returns new string or position it went wrong
-; `s` is assumed to be valid
-(defn is-valid [s c']
-  (let [stack #js []
+                         (\) \] \})
+                         (let [last (last stack)]
+                           (.pop stack)
+                           (cond
+                             (undefined? last) nil
+                             (and (= last \() (= c \))) 0
+                             (and (= last \[) (= c \])) 0
+                             (and (= last \{) (= c \})) 0
+                             :else nil)))]
 
-        s-valid?
-        (reduce (fn [acc c]
-                  (or acc
-                      (case c
-                        (\( \[ \{)
-                        (do (.push stack c) nil)
+                          ; then
+               [(conj arr validity) false]
+                          ; else
+               [(conj arr 1) true])))
+         [[] ; validity array
+          false] ; whether gone bad
+         s)]
 
-                        (\) \] \})
-                        (let [last (.-1 stack)] ;; TODO HERE does this work?
-                          (cond
-                            (undefined? last) false
-                            (and (= last \() (= c \))) true
-                            (and (= last \[) (= c \])) true
-                            (and (= last \{) (= c \})) true
-                            :else false)))))
-                nil
-                nil
-                s)]
-    (and s-valid? true)))
+    validity))
+
+; (set! (.-exprValidity js/window) (fn [s] (clj->js (expr-validity s))))

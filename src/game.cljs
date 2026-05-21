@@ -5,8 +5,6 @@
    [paths]
    [state :refer [clicked-mouse state]]))
 
-(def GEAR-STICK-RADIUS 11)
-
 (def GEAR-BULB-RADIUS 40)
 
 (def GEAR-ROD-HBREADTH 15)
@@ -21,8 +19,9 @@
         (when-let [cm cm?]
           (let [[x y] (:start cm)
                 [x y] (lib/ezileamron cnv x y)]
-            (when (.isPointInPath ctx path x y)
-              (set! (.-fillStyle ctx) "red"))))
+            ; (when (.isPointInPath ctx path x y)
+            ;   (set! (.-fillStyle ctx) "red"))
+            ))
         (.fill ctx path)
 
         ; (set! (.-fillStyle ctx) "green")
@@ -31,16 +30,13 @@
         ))))
 
 (defn draw [g cnv ctx]
-  ; check if mouse is on gear
-  (when-some [cm @clicked-mouse]
-    (when-some [[x y] (:now cm)]
-      (let [[x y] (lib/ezileamron cnv x y)]
-        (when-some [gear (paths/get-gear ctx cnv x y)]
-          (set! (.-font ctx) "bold 48px serif")
-          (.fillText ctx (name gear) 100 200)))))
+  (set! (.-fillStyle ctx) "white")
+  (set! (.-font ctx) "bold 48px serif")
+  ; (let [fmt-time (str (quot (:time g) 1000) "." (mod (:time g) 1000))]
+  ;   (.fillText ctx fmt-time 100 200))
 
   ; draw gear stick
-  (when-some [[x y] (:gear-location (:game @state))]
+  (let [[x y] (:gear-location (:game @state))]
     (lib/with-gear-transform ctx cnv
       (fn [ctx scale]
 
@@ -85,7 +81,7 @@
         (.beginPath ctx)
         (.arc ctx
               x y
-              GEAR-STICK-RADIUS
+              paths/GEAR-STICK-RADIUS
               0 (* 2 js/Math.PI))
         (.closePath ctx)
         (.fill ctx)
@@ -105,6 +101,9 @@
 
 (defn update_ [g cnv ctx]
 
+  (let [new-game (assoc g :time (- (js/Date.now) (:time-start g)))]
+    (swap! state assoc :game new-game))
+
   (when-some [cm @clicked-mouse]
     (when-some [[x y] (:move cm)]
       (swap! clicked-mouse assoc :move nil)
@@ -117,13 +116,24 @@
             [old-draw-x  old-draw-y] (:gear-location g)
             new-x (+ old-draw-x x')
             new-y (+ old-draw-y y')
-            inside-path (lib/with-gear-transform ctx cnv
-                          (fn [ctx _scale]
-                            (let [[x y] (map #(* % scale) [new-x new-y])
-                                  [trans-x trans-y] (lib/calc-transform cnv scale)
-                                  [x y] [(+ x trans-x) (+ y trans-y)]]
 
-                              (.isPointInPath ctx paths/GEAR-SOCKET-PATH x y))))]
+            [inside-path inside-gear]
+            (lib/with-gear-transform ctx cnv
+              (fn [ctx _scale]
+                (let [[x y] (map #(* % scale) [new-x new-y])
+                      [trans-x trans-y] (lib/calc-transform cnv scale)
+                      [x y] [(+ x trans-x) (+ y trans-y)]]
+
+                  [(and (.isPointInPath ctx paths/GEAR-SOCKET-PATH x y)
+                        (every?
+                         (fn [[off-x off-y]]
+                           (.isPointInPath ctx paths/GEAR-SOCKET-PATH (+ x off-x) (+ y off-y)))
+                         paths/INSCRIBED-OCTAGON))
+
+                   (paths/get-gear ctx x y)])))]
+
+        (when-some [gear inside-gear]
+          (js/console.log (name gear)))
 
         (when inside-path
           (let [new-game
