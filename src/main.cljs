@@ -58,7 +58,7 @@
                 (run!
                  (fn [i]
                    (let [time ((keyword (str i)) @state/cached-levels)
-                         text (and time (str "Level " i ":  " (quot time 1000) "." (mod time 1000) "s"))]
+                         text (and time (str i ":  " (quot time 1000) "." (mod time 1000) "s"))]
                      (when time
                        (.fillText ctx
                                   text
@@ -69,7 +69,7 @@
                 (run!
                  (fn [i]
                    (let [time ((keyword (str i)) @state/cached-levels)
-                         text (and time (str "Level " i ":  " (quot time 1000) "." (mod time 1000) "s"))]
+                         text (and time (str i ":  " (quot time 1000) "." (mod time 1000) "s"))]
                      (when time
                        (.fillText ctx
                                   text
@@ -80,7 +80,7 @@
                 (run!
                  (fn [i]
                    (let [time ((keyword (str i)) @state/cached-levels)
-                         text (and time (str "Level " i ":  " (quot time 1000) "." (mod time 1000) "s"))]
+                         text (and time (str i ":  " (quot time 1000) "." (mod time 1000) "s"))]
                      (when time
                        (.fillText ctx
                                   text
@@ -91,7 +91,7 @@
                 (run!
                  (fn [i]
                    (let [time ((keyword (str i)) @state/cached-levels)
-                         text (and time (str "Level " i ":  " (quot time 1000) "." (mod time 1000) "s"))]
+                         text (and time (str i ":  " (quot time 1000) "." (mod time 1000) "s"))]
                      (when time
                        (.fillText ctx
                                   text
