@@ -2,6 +2,10 @@
 
 (defn random [] (js/Math.random))
 
+(defn randint [max min]
+  (let [r (random)]
+    (+ (js/Math.floor (* r (+ (- max min) 1))) min)))
+
 ; (defn random [] (Math/random))
 
 ; (defn gen-expr
@@ -65,13 +69,13 @@
                  :else (str (gen-expr (+ x y (dec z)))))
                b)))))
 
-; returns validity-array
+; returns [validity-array whether-gone-bad]
 ; "([]{)}" -> validity-array: 000011
 (defn expr-validity [s]
   (let [stack
         #js []
 
-        [validity]
+        [validity bad]
         (reduce
          (fn [[arr bad] c]
 
@@ -94,14 +98,25 @@
                              (and (= last \{) (= c \})) 0
                              :else nil)))]
 
-                          ; then
+               ; then
                [(conj arr validity) false]
-                          ; else
+               ; else
                [(conj arr 1) true])))
          [[] ; validity array
           false] ; whether gone bad
          s)]
 
-    validity))
+    [validity bad]))
+
+(defn rotate-parens [parens]
+  (reduce-kv
+   (fn [obj gear-name gear-parens]
+     (assoc obj
+            gear-name
+            (if-some [_ gear-parens]
+              (conj (vec (rest gear-parens)) (first gear-parens))
+              nil)))
+   {}
+   parens))
 
 ; (set! (.-exprValidity js/window) (fn [s] (clj->js (expr-validity s))))

@@ -18,12 +18,11 @@
         yy (.-height canvas)]
     [(* x xx) (* y yy)]))
 
-(defn with-ctx [f]
-  (fn [ctx]
-    (.save ctx)
-    (let [ret (f ctx)
-          _ (.restore ctx)]
-      ret)))
+(defn with-ctx [ctx f]
+  (.save ctx)
+  (let [ret (f ctx)]
+    (.restore ctx)
+    ret))
 
 (defn calc-scale [cnv] (/ (.-height cnv) 600))
 
@@ -38,10 +37,10 @@
    [scale (calc-scale cnv)
     [offset-x offset-y] (calc-transform cnv scale)]
 
-    ((lib/with-ctx (fn [ctx]
-                     (.translate ctx offset-x offset-y)
-                     (.scale ctx scale scale)
-                     (f ctx scale))) ctx)))
+    (lib/with-ctx ctx (fn [ctx]
+                        (.translate ctx offset-x offset-y)
+                        (.scale ctx scale scale)
+                        (f ctx scale)))))
 
 ; (defn get-user-times [])
 ; 
