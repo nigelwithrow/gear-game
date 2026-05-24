@@ -131,30 +131,50 @@
 
             (if (:game-over s)
 
-              () ; game over
+              () ; game over - unreachable
 
               (if-some [next-level (:next-level s)]
-                (let [finished-lvl (dec (:lvl next-level))]
+                (let [finished-lvl (dec (:lvl next-level))] ; next level
 
-                  (.drawImage ctx assets/NEXT-LEVEL ; next level
-                              0 0
-                              (.-width cnv) (.-height cnv))
+                  (if (= (:lvl next-level) 41)
+                    (do
+                      (.drawImage ctx assets/WIN
+                                  0 0
+                                  (.-width cnv) (.-height cnv))
 
-                  (.save ctx)
-                  (set! (.-fillStyle ctx) "white")
-                  (set! (.-font ctx) (str "bold " (* (.-height cnv) 0.0524) "px serif"))
-                  (.fillText ctx
-                             (str finished-lvl)
-                             (/ (* (.-width cnv) 64) 135)
-                             (* (.-height cnv) 0.4596))
+                      (.save ctx)
+                      (set! (.-fillStyle ctx) "white")
+                      (set! (.-font ctx) (str "bold " (* (.-height cnv) 0.0524) "px serif"))
 
-                  (let [time-ms ((keyword (str finished-lvl)) (:times next-level))
-                        time (str (quot time-ms 1000) "." (mod time-ms 1000) "s")]
-                    (.fillText ctx
-                               time
-                               (/ (* (.-width cnv) 64) 135)
-                               (* (.-height cnv) 0.5263)))
-                  (.restore ctx))
+                      (let [time-ms (apply + (vals (:times next-level)))
+                            time (str (quot time-ms 1000) "." (mod time-ms 1000) "s")]
+                        (.fillText ctx
+                                   time
+                                   (* (.-width cnv) 0.45)
+                                   (* (.-height cnv) 0.512)))
+                      (.restore ctx))
+
+                    (do
+
+                      (.drawImage ctx assets/NEXT-LEVEL
+                                  0 0
+                                  (.-width cnv) (.-height cnv))
+
+                      (.save ctx)
+                      (set! (.-fillStyle ctx) "white")
+                      (set! (.-font ctx) (str "bold " (* (.-height cnv) 0.0524) "px serif"))
+                      (.fillText ctx
+                                 (str finished-lvl)
+                                 (/ (* (.-width cnv) 64) 135)
+                                 (* (.-height cnv) 0.4596))
+
+                      (let [time-ms ((keyword (str finished-lvl)) (:times next-level))
+                            time (str (quot time-ms 1000) "." (mod time-ms 1000) "s")]
+                        (.fillText ctx
+                                   time
+                                   (/ (* (.-width cnv) 64) 135)
+                                   (* (.-height cnv) 0.5263)))
+                      (.restore ctx))))
 
                 () ; unreachable
                 )))))))
@@ -346,7 +366,7 @@
 
             ; next level screen
 
-            (if-some [next-level (:next-level @state)] ; safe
+            (if-some [next-level (:next-level @state)]
 
               (if-some [cm @clicked-mouse]
 
@@ -365,8 +385,10 @@
                                          (* (.-width cnv) 0.35) (* (.-height cnv) 0.8)
                                          (* (.-width cnv) 0.3) (* (.-height cnv) 0.1))
                         (.isPointInPath ctx x y))
-                      (do
-                        (js/console.log (:lvl next-level))
+                      (if (= (:lvl next-level) 41)
+                        (swap! state assoc
+                               :next-level nil
+                               :main-menu {:clicked nil})
                         (swap! state assoc
                                :next-level nil
                                :game (INIT-GAME

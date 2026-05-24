@@ -70,7 +70,7 @@
         (.beginPath ctx)
         (.arc ctx
               x y
-              paths/GEAR-STICK-RADIUS
+              (paths/GEAR-STICK-RADIUS cnv)
               0 (* 2 js/Math.PI))
         (.closePath ctx)
         (.fill ctx)
@@ -110,18 +110,19 @@
                                   )
 
                       ; draw validity underline
-                      (let [pad 0.1]
-                        (set! (.-fillStyle ctx)
-                              (case valid
-                                0 "white"
-                                1 "red"))
+                      (when (:show-validity-array (:libgame g))
+                        (let [pad 0.1]
+                          (set! (.-fillStyle ctx)
+                                (case valid
+                                  0 "white"
+                                  1 "red"))
 
-                        (.fillRect ctx
-                                   i ; x
-                                   1.5 ; y
-                                   (- 1 (* 2 pad)) ; w
-                                   0.3 ; h
-                                   ))))
+                          (.fillRect ctx
+                                     i ; x
+                                     1.5 ; y
+                                     (- 1 (* 2 pad)) ; w
+                                     0.3 ; h
+                                     )))))
 
                   (range)
                   (:expr g)
@@ -182,7 +183,8 @@
              nil
              (:parens g)))))))
 
-  (draw-gear cnv ctx @clicked-mouse))
+  (when (:show-socket (:libgame g))
+    (draw-gear cnv ctx @clicked-mouse)))
 
 (defn update_ [g cnv ctx]
 
@@ -218,7 +220,7 @@
                                  (every?
                                   (fn [[off-x off-y]]
                                     (.isPointInPath ctx paths/GEAR-SOCKET-PATH (+ x off-x) (+ y off-y)))
-                                  paths/INSCRIBED-OCTAGON)))))]
+                                  (paths/INSCRIBED-OCTAGON cnv))))))]
 
                   ; (when-some [gear inside-gear]
                   ;   (js/console.log (name gear)))
@@ -238,7 +240,7 @@
                                                      (.beginPath ctx)
                                                      (.arc ctx
                                                            gear-x gear-y
-                                                           paths/GEAR-STICK-RADIUS
+                                                           (paths/GEAR-STICK-RADIUS cnv)
                                                            0 (* 2 js/Math.PI))
                                                      (.closePath ctx)
                                                      (.isPointInPath ctx x y)))]

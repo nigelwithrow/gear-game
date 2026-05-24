@@ -30,6 +30,11 @@
     (set! (.-src img) "next-level.png")
     img))
 
+(defonce WIN
+  (let [img (new js/Image)]
+    (set! (.-src img) "win.png")
+    img))
+
 (defonce USER-SCORE-BG
   (let [img (new js/Image)]
     (set! (.-src img) "user-score-bg.png")
@@ -66,6 +71,6 @@
   (let [promises
         (map
          (fn [img] (new js/Promise #(.addEventListener img "load" %)))
-         [BG BULB ROD MENU HOW-TO-PLAY MEME PARENS NEXT-LEVEL GEAR])]
+         [BG BULB ROD MENU HOW-TO-PLAY MEME PARENS NEXT-LEVEL GEAR USER-SCORE-BG WIN])]
 
     (js/Promise.all promises)))

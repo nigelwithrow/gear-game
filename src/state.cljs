@@ -33,7 +33,6 @@
 
     (<= 1 lvl 10) (let [difficulty (level->difficulty lvl)]
                     {:show-socket true
-                     :reverse false ; if true then the initial string will already be an invalid expr
                      :show-validity-array true
                      :expr (libgame/gen-expr difficulty)
                      :filled difficulty ; half
@@ -41,27 +40,24 @@
                      :duration nil})
 
     (<= 11 lvl 20) (let [difficulty (+ 3 (level->difficulty (- lvl 10)))]
-                     {:show-socket false
-                      :reverse false
+                     {:show-socket true
                       :show-validity-array true
                       :expr (libgame/gen-expr difficulty)
                       :filled (quot  (* 2 difficulty) 3) ; 1/3
                       :duration nil})
 
     (<= 21 lvl 30) (let [difficulty (+ 6 (level->difficulty (- lvl 20)))]
-                     {:show-socket false
-                      :reverse true
-                      :show-validity-array true
-                      :expr (libgame/gen-expr difficulty)
-                      :filled (quot (* 2 difficulty) 6) ; 1/6
-                      :duration nil})
-
-    (<= 31 lvl 40) (let [difficulty (+ 9 (level->difficulty (- lvl 30)))]
-                     {:show-socket false
-                      :reverse true
+                     {:show-socket true
                       :show-validity-array false
                       :expr (libgame/gen-expr difficulty)
-                      :filled (quot (* 2 difficulty) 9) ; 1/9
+                      :filled (quot  (* 2 difficulty) 3) ; 1/3
+                      :duration nil})
+
+    (<= 31 lvl 40) (let [difficulty 9]
+                     {:show-socket false
+                      :show-validity-array false
+                      :expr (libgame/gen-expr difficulty)
+                      :filled (quot  (* 2 difficulty) 3) ; 1/3
                       :duration nil})))
 
 (defn num->gear [n]
@@ -163,5 +159,4 @@
                 []
                 (keys cached-levels))
         levels (sort levels)]
-    (js/console.log (clj->js levels))
     (inc (last levels))))

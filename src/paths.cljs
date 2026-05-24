@@ -97,10 +97,15 @@
   (set! (.-fillStyle ctx) "yellow")
   (.fill ctx))
 
-(def GEAR-STICK-RADIUS 13)
+(defn GEAR-STICK-RADIUS [cnv]
+  (+ (* (.-height cnv) (/ 3.0 440.0)) (/ 62.0 11.0)))
 
-(defonce INSCRIBED-OCTAGON
-  (map
-   #(vec [(* GEAR-STICK-RADIUS (js/Math.cos (/ (* % js/Math.PI) 4)))
-          (* GEAR-STICK-RADIUS (js/Math.sin (/ (* % js/Math.PI) 4)))])
-   [0 1 2 3 4 5 6 7]))
+; 1 / (1620 x + c) = 13
+; 1 / (810 x + c) = 10
+
+(defn INSCRIBED-OCTAGON [cnv]
+  (let [GEAR-STICK-RADIUS (GEAR-STICK-RADIUS cnv)]
+    (map
+     #(vec [(* GEAR-STICK-RADIUS (js/Math.cos (/ (* % js/Math.PI) 4)))
+            (* GEAR-STICK-RADIUS (js/Math.sin (/ (* % js/Math.PI) 4)))])
+     [0 1 2 3 4 5 6 7])))

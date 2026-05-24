@@ -32,6 +32,10 @@ out/next-level.png: assets/next-level.png
 	mkdir -p out
 	cp assets/next-level.png out/next-level.png
 
+out/win.png: assets/win.png
+	mkdir -p out
+	cp assets/win.png out/win.png
+
 out/user-score-bg.png: assets/user-score-bg.png
 	mkdir -p out
 	cp assets/user-score-bg.png out/user-score-bg.png
@@ -51,12 +55,12 @@ out/gear.png: assets/gear.png
 watch: $(SRC) \
 	shadow-cljs.edn \
 	out/index.html out/bg.png out/bulb.png out/rod.png out/menu.png out/how-to-play.png \
-	out/next-level.png out/meme.png out/parens.png out/gear.png out/user-score-bg.png
+	out/next-level.png out/meme.png out/parens.png out/gear.png out/user-score-bg.png out/win.png
 	shadow-cljs watch game
 
 out: out/main.js \
 	out/index.html out/bg.png out/bulb.png out/rod.png out/menu.png out/how-to-play.png \
-	out/next-level.png out/meme.png out/parens.png out/gear.png out/user-score-bg.png
+	out/next-level.png out/meme.png out/parens.png out/gear.png out/user-score-bg.png out/win.png
 
 build: out
 	
