@@ -164,7 +164,8 @@
                            (let [sx (assets/paren->source-offset paren)]
                              (.save ctx)
                              (when (> i 0)
-                               (set! (.-filter ctx) (str "opacity(" (- 1 (* i 0.4)) ")")))
+                               (let [opacity (/ 1.0 (+ 1 (* 0.6 i)))]
+                                 (set! (.-filter ctx) (str "opacity(" opacity ")"))))
                              (.drawImage ctx assets/PARENS
                                          (* sx 32) ; source
                                          0
