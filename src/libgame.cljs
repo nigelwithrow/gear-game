@@ -2,7 +2,7 @@
 
 (defn random [] (js/Math.random))
 
-(defn randint [max min]
+(defn randint [min max]
   (let [r (random)]
     (+ (js/Math.floor (* r (+ (- max min) 1))) min)))
 
